@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Logica 2.1 Patcher</title>
+<meta name="description" content="Patch your own Logica THE DIAGNOSTIC 2.0 EPROMs into Logica 2.1 – Serial Edition, in your browser.">
+<style>
+:root {
+  --bg: #f6f7f5; --fg: #1c211f; --muted: #5d6762; --line: #cfd6d2; --card: #ffffff;
+  --accent: #1d4ed8; --accent-fg: #ffffff; --ok: #15803d; --err: #b91c1c; --drop: #eef2ff;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121614; --fg: #e5ebe8; --muted: #98a49e; --line: #36403b; --card: #1a201d;
+  --accent: #6ea8ff; --accent-fg: #0b1220; --ok: #4ade80; --err: #f87171; --drop: #1b2236; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #121614; --fg: #e5ebe8; --muted: #98a49e; --line: #36403b; --card: #1a201d;
+  --accent: #6ea8ff; --accent-fg: #0b1220; --ok: #4ade80; --err: #f87171; --drop: #1b2236; color-scheme: dark }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.55 var(--sans); }
+main { max-width: 760px; margin: 0 auto; padding: 40px 16px 56px; display: grid; gap: 32px; }
+h1 { font-size: 1.75rem; margin: 0; line-height: 1.2; }
+h2 { font-size: 1.15rem; margin: 0 0 12px; }
+h3 { font-size: 1rem; margin: 18px 0 6px; }
+p { margin: 0 0 10px; max-width: 68ch; }
+.sub { color: var(--muted); margin-top: 6px; }
+code { font-family: var(--mono); font-size: 0.92em; }
+a { color: var(--accent); }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 20px; }
+#drop { border: 2px dashed var(--line); border-radius: 8px; padding: 28px 16px; text-align: center; cursor: pointer; }
+#drop.over { border-color: var(--accent); background: var(--drop); }
+#drop strong { display: block; margin-bottom: 4px; }
+#drop span { color: var(--muted); font-size: 0.9rem; }
+#status { margin: 14px 0 0; min-height: 1.5em; }
+#status.ok { color: var(--ok); } #status.err { color: var(--err); }
+#out[hidden] { display: none; }
+.dl { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 4px; }
+.dl a { display: inline-block; padding: 8px 12px; border-radius: 6px; background: var(--accent); color: var(--accent-fg);
+  text-decoration: none; font: 600 0.9rem var(--mono); }
+.dl a.alt { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+.note { color: var(--muted); font-size: 0.9rem; }
+ul { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; }
+.change { border-top: 1px solid var(--line); padding-top: 10px; margin-top: 10px; }
+.change:first-of-type { border-top: 0; padding-top: 0; margin-top: 0; }
+.change time { font: 600 0.85rem var(--mono); color: var(--muted); }
+details summary { cursor: pointer; color: var(--accent); margin-top: 12px; }
+table { border-collapse: collapse; width: 100%; font-size: 0.92rem; }
+td { padding: 5px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+td:first-child { white-space: nowrap; font-family: var(--mono); }
+footer { color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--line); padding-top: 16px; }
+footer p { max-width: none; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Logica 2.1 – Serial Edition</h1>
+    <p class="sub">Turns your own Logica <em>THE DIAGNOSTIC 2.0</em> EPROMs (A1200/A4000) into 2.1: every screen and menu also on a
+      serial terminal, so you can diagnose an Amiga with no working video. Patch <span id="ver">…</span>.</p>
+  </header>
+
+  <section class="card">
+    <h2>1. Your Logica 2.0 files</h2>
+    <p>Drop the two dumps of your Logica 2.0 EPROMs here: the hi and the lo file, in any order, as read or byte-swapped.
+      They are patched on your computer and never uploaded.</p>
+    <div id="drop" tabindex="0" role="button" aria-label="Choose the two Logica 2.0 files">
+      <strong>Drop both files here, or click to choose</strong>
+      <span>for example logica-hi-a1200-a4000.rom and logica-lo-a1200-a4000.rom</span>
+    </div>
+    <input id="file" type="file" multiple hidden>
+    <p id="status" role="status"></p>
+  </section>
+
+  <section class="card" id="out" hidden>
+    <h2>2. Download and burn</h2>
+    <h3>A1200 / A4000: the hi and lo pair</h3>
+    <div class="dl" id="dl-32"></div>
+    <div class="dl" id="dl-32p"></div>
+    <p class="note">The first pair has the byte order of Logica's own files and of most EPROM programmers (TL866, T48).
+      The outlined pair is the same data in the other byte order. If a burned set does not boot, try the other one.</p>
+    <h3>A500 / A600: one 16-bit ROM (untested on these models)</h3>
+    <div class="dl" id="dl-16"></div>
+    <p class="note">The plain file also suits flash ROM adapters. The menus have not been checked on these models yet.</p>
+  </section>
+
+  <section class="card">
+    <h2>What's new</h2>
+    <div id="changes"><p class="note">Loading…</p></div>
+  </section>
+
+  <section class="card">
+    <h2>What the patch does</h2>
+    <ul>
+      <li>A text console on the <strong>parallel port</strong> from the very first instruction, before any RAM is tested:
+        one line per boot step, then every screen Logica draws (VT100/ANSI, 80×25).</li>
+      <li>The same console on the <strong>serial port</strong>, for a board whose CIAs are dead.</li>
+      <li>The menus and tests are driven from the terminal's keyboard. Logica's tests themselves are unchanged and give the same verdicts as 2.0.</li>
+      <li>The power LED blinks during boot, a sign of life even without a terminal. The old step LEDs are gone.</li>
+      <li>The title, About pages and version say <strong>THE DIAGNOSTIC 2.1</strong>, with "Serial goes Parallel" below.</li>
+    </ul>
+
+    <h3>Terminal and cable</h3>
+    <p>9600 baud, 8N1, no flow control, VT100/ANSI. On the parallel port, use a 5 V (or 5 V tolerant 3.3 V) USB-TTL adapter,
+      never an RS-232 one: pin 11 to the adapter's RX, pins 10 and 12 tied together through 1 kΩ to its TX, pins 18–25 to GND.
+      <a href="logica21-console-cable.pdf">Wiring sheet (PDF)</a>. On the serial port, use an ordinary RS-232 adapter with a null-modem cable.</p>
+
+    <h3>Keys</h3>
+    <table>
+      <tr><td>1–9, 0</td><td>menu items</td></tr>
+      <tr><td>↑ ↓ ← →</td><td>move in a menu; ← and → switch columns in two-column menus</td></tr>
+      <tr><td>Return, Esc</td><td>select, back</td></tr>
+      <tr><td>F1–F4, ?, +</td><td>F1–F4, help, About</td></tr>
+      <tr><td>[ ]</td><td>left and right mouse button</td></tr>
+      <tr><td>Ctrl-C</td><td>break a running test</td></tr>
+      <tr><td>any other key</td><td>continues a "Press on any Enabled Input Device" prompt</td></tr>
+    </table>
+    <p class="note" style="margin-top:10px">Now and then a keystroke is lost; press it again. A wrong key is never received.</p>
+  </section>
+
+  <footer>
+    <p><em>THE DIAGNOSTIC 2.0</em> is © Logica S.N.C., who wrote the original program and its tests.
+      Logica 2.1 – Serial Edition is an independent patch, not affiliated with or endorsed by Logica.
+      This site holds no Logica code or data: it works only on files you already own, and nothing you drop here leaves your computer.
+      Provided as is, without warranty; burn and fit EPROMs at your own risk.</p>
+  </footer>
+</main>
+
+<script type="module">
+import { build } from "./patcher.js";
+
+const $ = (id) => document.getElementById(id);
+const drop = $("drop"), input = $("file"), status = $("status");
+let data;
+
+function say(text, cls) { status.textContent = text; status.className = cls || ""; }
+
+function esc(s) {
+  return s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+}
+function inline(s) { return esc(s).replace(/`([^`]+)`/g, "<code>$1</code>"); }
+
+function showChanges(changes) {
+  const block = (c) => `<div class="change"><time>${esc(c.date)}</time><ul>${
+    c.items.map((i) => `<li>${inline(i)}</li>`).join("")}</ul></div>`;
+  const [latest, ...older] = changes;
+  $("changes").innerHTML = latest ? block(latest) + (older.length
+    ? `<details><summary>Earlier updates</summary>${older.map(block).join("")}</details>` : "")
+    : '<p class="note">No entries.</p>';
+}
+
+fetch("patch-data.json").then((r) => r.json()).then((d) => {
+  data = d;
+  $("ver").textContent = d.version;
+  showChanges(d.changes || []);
+}).catch(() => say("Could not load the patch data. Reload the page.", "err"));
+
+const urls = [];
+function link(name, bytes, alt) {
+  const a = document.createElement("a");
+  const url = URL.createObjectURL(new Blob([bytes], { type: "application/octet-stream" }));
+  urls.push(url);
+  a.href = url; a.download = name; a.textContent = name;
+  if (alt) a.className = "alt";
+  return a;
+}
+
+async function handle(files) {
+  $("out").hidden = true;
+  if (!data) return say("The patch data is not loaded yet.", "err");
+  if (files.length !== 2) return say("Choose exactly two files: the hi and the lo EPROM.", "err");
+  say("Patching…");
+  try {
+    const [a, b] = await Promise.all([...files].map(async (f) => new Uint8Array(await f.arrayBuffer())));
+    const r = await build(a, b, data);
+    urls.splice(0).forEach(URL.revokeObjectURL);
+    const f = r.files;
+    $("dl-32").replaceChildren(link("logica21-a1200-hi-swapped.rom", f["logica21-a1200-hi-swapped.rom"]),
+                               link("logica21-a1200-lo-swapped.rom", f["logica21-a1200-lo-swapped.rom"]));
+    $("dl-32p").replaceChildren(link("logica21-a1200-hi.rom", f["logica21-a1200-hi.rom"], true),
+                                link("logica21-a1200-lo.rom", f["logica21-a1200-lo.rom"], true));
+    $("dl-16").replaceChildren(link("logica21-16bit-swapped.rom", f["logica21-16bit-swapped.rom"]),
+                               link("logica21-16bit.rom", f["logica21-16bit.rom"], true));
+    $("out").hidden = false;
+    say(`Genuine Logica 2.0 pair found (${r.how}). Patched to ${data.version}.`, "ok");
+  } catch (e) {
+    say(e.message, "err");
+  }
+}
+
+drop.addEventListener("click", () => input.click());
+drop.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); input.click(); } });
+input.addEventListener("change", () => { handle(input.files); input.value = ""; });
+drop.addEventListener("dragover", (e) => { e.preventDefault(); drop.classList.add("over"); });
+drop.addEventListener("dragleave", () => drop.classList.remove("over"));
+drop.addEventListener("drop", (e) => { e.preventDefault(); drop.classList.remove("over"); handle(e.dataTransfer.files); });
+</script>
+</body>
+</html>
