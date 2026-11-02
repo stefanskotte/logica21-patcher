@@ -269,6 +269,7 @@ export async function build(a, b, data) {
       "logica21-a1200-lo-swapped.rom": lo,
       "logica21-a1200-hi.rom": swap(hi),
       "logica21-a1200-lo.rom": swap(lo),
+      "logica21-emulator.rom": rom,
       "logica21-16bit.rom": rom,
       "logica21-16bit-swapped.rom": swap(rom),
     },

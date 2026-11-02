@@ -41,6 +41,7 @@ a { color: var(--accent); }
   text-decoration: none; font: 600 0.9rem var(--mono); }
 .dl a.alt { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
 .note { color: var(--muted); font-size: 0.9rem; }
+.what { margin: 12px 0 0; font-size: 0.9rem; font-weight: 600; }
 ul { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; }
 .change { border-top: 1px solid var(--line); padding-top: 10px; margin-top: 10px; }
 .change:first-of-type { border-top: 0; padding-top: 0; margin-top: 0; }
@@ -74,15 +75,23 @@ footer p { max-width: none; }
   </section>
 
   <section class="card" id="out" hidden>
-    <h2>2. Download and burn</h2>
-    <h3>A1200 / A4000: the hi and lo pair</h3>
+    <h2>2. Download</h2>
+    <h3>Byte-swapped (for burning and flashing)</h3>
+    <p class="note">The byte order of Logica's own files and of most EPROM programmers (TL866, T48).</p>
+    <p class="what">A1200 / A4000: hi and lo pair</p>
     <div class="dl" id="dl-32"></div>
-    <div class="dl" id="dl-32p"></div>
-    <p class="note">The first pair has the byte order of Logica's own files and of most EPROM programmers (TL866, T48).
-      The outlined pair is the same data in the other byte order. If a burned set does not boot, try the other one.</p>
-    <h3>A500 / A600: one 16-bit ROM (untested on these models)</h3>
+    <p class="what">A500 / A600: one 16-bit ROM (untested on these models)</p>
     <div class="dl" id="dl-16"></div>
-    <p class="note">The plain file also suits flash ROM adapters. The menus have not been checked on these models yet.</p>
+
+    <h3>ROM, not byte-swapped (for emulators etc.)</h3>
+    <p class="what">Emulators: one 512 KB image</p>
+    <div class="dl" id="dl-emu"></div>
+    <p class="note">Select it as the Kickstart ROM of an A1200 configuration. Tested in WinUAE.</p>
+    <p class="what">A1200 / A4000: hi and lo pair</p>
+    <div class="dl" id="dl-32p"></div>
+    <p class="what">A500 / A600: one 16-bit ROM (untested on these models)</p>
+    <div class="dl" id="dl-16p"></div>
+    <p class="note">Same data, other byte order. If a burned set does not boot, try this one. The 16-bit file also suits flash ROM adapters that take a plain image.</p>
   </section>
 
   <section class="card">
@@ -180,8 +189,9 @@ async function handle(files) {
                                link("logica21-a1200-lo-swapped.rom", f["logica21-a1200-lo-swapped.rom"]));
     $("dl-32p").replaceChildren(link("logica21-a1200-hi.rom", f["logica21-a1200-hi.rom"], true),
                                 link("logica21-a1200-lo.rom", f["logica21-a1200-lo.rom"], true));
-    $("dl-16").replaceChildren(link("logica21-16bit-swapped.rom", f["logica21-16bit-swapped.rom"]),
-                               link("logica21-16bit.rom", f["logica21-16bit.rom"], true));
+    $("dl-emu").replaceChildren(link("logica21-emulator.rom", f["logica21-emulator.rom"]));
+    $("dl-16").replaceChildren(link("logica21-16bit-swapped.rom", f["logica21-16bit-swapped.rom"]));
+    $("dl-16p").replaceChildren(link("logica21-16bit.rom", f["logica21-16bit.rom"], true));
     $("out").hidden = false;
     say(`Genuine Logica 2.0 pair found (${r.how}). Patched to ${data.version}.`, "ok");
   } catch (e) {
