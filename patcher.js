@@ -71,13 +71,20 @@ function full(f) {
   return null;
 }
 
-// Find the genuine Logica 2.0 image in two files given in either order,
-// each as shipped or byte-swapped. Returns {img, how} or throws.
-export async function identify(a, b, data) {
+// One merged 512 KB image, as read or byte-swapped.
+async function identifyMerged(f, data) {
+  for (const [img, how] of [[f, "one merged file, as given"], [swap(f), "one merged file, byte-swapped"]]) {
+    if ((await sha256(img)) === data.sha256) return { img, how };
+  }
+  throw new Error("This file is not a complete Logica THE DIAGNOSTIC 2.0 image. If it is one of the hi/lo EPROM dumps, drop both files together.");
+}
+
+// The hi and lo files in either order, each as shipped or byte-swapped.
+async function identifyPair(a, b, data) {
   const fa = full(a), fb = full(b);
   if (!fa || !fb) throw new Error("Each file must be 256 KB or 512 KB (a Logica 2.0 hi or lo EPROM).");
   const tries = [];
-  for (const [hi, lo, order] of [[fa, fb, "as given"], [fb, fa, "hi and lo swapped"]]) {
+  for (const [hi, lo, order] of [[fa, fb, "hi/lo pair, as given"], [fb, fa, "hi/lo pair, hi and lo swapped"]]) {
     for (const sw of [false, true]) {
       tries.push([sw ? swap(hi) : hi, sw ? swap(lo) : lo, order + (sw ? ", byte-swapped files" : "")]);
     }
@@ -87,6 +94,14 @@ export async function identify(a, b, data) {
     if ((await sha256(img)) === data.sha256) return { img, how };
   }
   throw new Error("These files are not the Logica THE DIAGNOSTIC 2.0 hi/lo pair this patch is made for.");
+}
+
+// Find the genuine Logica 2.0 image in the files given: one merged image or
+// the hi/lo pair. Returns {img, how} or throws.
+export async function identify(files, data) {
+  if (files.length === 1) return identifyMerged(files[0], data);
+  if (files.length === 2) return identifyPair(files[0], files[1], data);
+  throw new Error("Choose one merged 512 KB file, or two files: the hi and the lo EPROM.");
 }
 
 function logicaChecksum(img, data) {
@@ -258,8 +273,8 @@ export function apply(img, data) {
 }
 
 // The burn set of `make logica21-burn` (build/burn/), as {name: bytes}.
-export async function build(a, b, data) {
-  const { img, how } = await identify(a, b, data);
+export async function build(files, data) {
+  const { img, how } = await identify(files, data);
   const rom = apply(img, data);
   const [hi, lo] = split(rom);
   return {

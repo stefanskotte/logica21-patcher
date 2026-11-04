@@ -3,7 +3,7 @@
 **Use it:** https://stefanskotte.github.io/logica21-patcher/
 
 A web page that patches your own dumps of Logica *THE DIAGNOSTIC 2.0*
-(the A1200/A4000 hi and lo EPROMs) into Logica 2.1 – Serial Edition. It
+(the A1200/A4000 hi and lo EPROMs, or one 512 KB emulator or 16-bit image) into Logica 2.1 – Serial Edition. It
 runs in your browser, and nothing is uploaded.
 
 Logica 2.1 adds a text console on the parallel port (and the serial port)
@@ -25,7 +25,7 @@ update.
 - `logica21-console-cable.pdf`: the console cable wiring sheet.
 
 This repository contains no Logica code or data, and no ROM images. The
-patcher only works on a genuine Logica 2.0 pair, which it recognises by its
+patcher only works on a genuine Logica 2.0 image, which it recognises by its
 hash. It derives the edited title text and logo from your own files, in
 your browser.
 

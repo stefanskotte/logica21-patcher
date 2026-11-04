@@ -64,11 +64,11 @@ footer p { max-width: none; }
 
   <section class="card">
     <h2>1. Your Logica 2.0 files</h2>
-    <p>Drop the two dumps of your Logica 2.0 EPROMs here: the hi and the lo file, in any order, as read or byte-swapped.
-      They are patched on your computer and never uploaded.</p>
-    <div id="drop" tabindex="0" role="button" aria-label="Choose the two Logica 2.0 files">
-      <strong>Drop both files here, or click to choose</strong>
-      <span>for example logica-hi-a1200-a4000.rom and logica-lo-a1200-a4000.rom</span>
+    <p>Drop your Logica 2.0 dump here: either the hi and the lo file together (32-bit), in any order, or one 512 KB file (an emulator or 16-bit image).
+      Both work as read or byte-swapped. They are patched on your computer and never uploaded.</p>
+    <div id="drop" tabindex="0" role="button" aria-label="Choose one Logica 2.0 ROM file or the hi and lo pair">
+      <strong>Drop one ROM file or the hi and lo pair here, or click to choose</strong>
+      <span>for example logica-dialoga-200.rom, or logica-hi-a1200-a4000.rom and logica-lo-a1200-a4000.rom</span>
     </div>
     <input id="file" type="file" multiple hidden>
     <p id="status" role="status"></p>
@@ -178,11 +178,10 @@ function link(name, bytes, alt) {
 async function handle(files) {
   $("out").hidden = true;
   if (!data) return say("The patch data is not loaded yet.", "err");
-  if (files.length !== 2) return say("Choose exactly two files: the hi and the lo EPROM.", "err");
   say("Patching…");
   try {
-    const [a, b] = await Promise.all([...files].map(async (f) => new Uint8Array(await f.arrayBuffer())));
-    const r = await build(a, b, data);
+    const contents = await Promise.all([...files].map(async (f) => new Uint8Array(await f.arrayBuffer())));
+    const r = await build(contents, data);
     urls.splice(0).forEach(URL.revokeObjectURL);
     const f = r.files;
     $("dl-32").replaceChildren(link("logica21-a1200-hi-swapped.rom", f["logica21-a1200-hi-swapped.rom"]),
@@ -193,7 +192,7 @@ async function handle(files) {
     $("dl-16").replaceChildren(link("logica21-16bit-swapped.rom", f["logica21-16bit-swapped.rom"]));
     $("dl-16p").replaceChildren(link("logica21-16bit.rom", f["logica21-16bit.rom"], true));
     $("out").hidden = false;
-    say(`Genuine Logica 2.0 pair found (${r.how}). Patched to ${data.version}.`, "ok");
+    say(`Genuine Logica 2.0 found (${r.how}). Patched to ${data.version}.`, "ok");
   } catch (e) {
     say(e.message, "err");
   }
