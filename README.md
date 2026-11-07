@@ -6,6 +6,11 @@ A web page that patches your own dumps of Logica *THE DIAGNOSTIC 2.0*
 (the A1200/A4000 hi and lo EPROMs, or one 512 KB emulator or 16-bit image) into Logica 2.1 – Serial Edition. It
 runs in your browser, and nothing is uploaded.
 
+A second tab fits any Amiga ROM image (256 or 512 KB) to a physical chip:
+one 16-bit chip for the A500/A600/A2000 or the hi/lo pair for the
+A1200/A4000, on a 27C400, 27C800 or 27C160 / MX29F1615, with the image
+repeated to fill the bigger chips.
+
 Logica 2.1 adds a text console on the parallel port (and the serial port)
 to the original program. Every screen and menu is sent to a VT100 terminal,
 and the menus can be driven from the terminal's keyboard. This means you

@@ -50,6 +50,23 @@ details summary { cursor: pointer; color: var(--accent); margin-top: 12px; }
 table { border-collapse: collapse; width: 100%; font-size: 0.92rem; }
 td { padding: 5px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
 td:first-child { white-space: nowrap; font-family: var(--mono); }
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-bottom: -16px; flex-wrap: wrap; }
+.tabs button { font: 600 0.95rem var(--sans); color: var(--muted); background: none; border: 1px solid transparent;
+  border-bottom: 0; border-radius: 6px 6px 0 0; padding: 8px 14px; cursor: pointer; margin-bottom: -1px; }
+.tabs button[aria-selected="true"] { color: var(--fg); background: var(--card); border-color: var(--line); }
+[role="tabpanel"] { display: grid; gap: 32px; }
+[role="tabpanel"][hidden] { display: none; }
+fieldset { border: 0; padding: 0; margin: 14px 0 0; display: grid; gap: 6px; }
+legend { font-weight: 600; padding: 0; margin-bottom: 6px; }
+label.opt { display: flex; gap: 8px; align-items: baseline; cursor: pointer; }
+label.opt span { color: var(--muted); font-size: 0.9rem; }
+.drop { border: 2px dashed var(--line); border-radius: 8px; padding: 28px 16px; text-align: center; cursor: pointer; }
+.drop.over { border-color: var(--accent); background: var(--drop); }
+.drop strong { display: block; margin-bottom: 4px; }
+.drop span { color: var(--muted); font-size: 0.9rem; }
+.status { margin: 14px 0 0; min-height: 1.5em; }
+.status.ok { color: var(--ok); } .status.err { color: var(--err); }
+button.link { font: inherit; color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; }
 footer { color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--line); padding-top: 16px; }
 footer p { max-width: none; }
 </style>
@@ -62,6 +79,12 @@ footer p { max-width: none; }
       serial terminal, so you can diagnose an Amiga with no working video. Patch <span id="ver">…</span>.</p>
   </header>
 
+  <nav class="tabs" role="tablist" aria-label="Tools">
+    <button role="tab" id="tab-patch" aria-controls="panel-patch" aria-selected="true">Patch Logica 2.0</button>
+    <button role="tab" id="tab-fit" aria-controls="panel-fit" aria-selected="false" tabindex="-1">Fit a ROM to an EPROM</button>
+  </nav>
+
+  <div role="tabpanel" id="panel-patch" aria-labelledby="tab-patch">
   <section class="card">
     <h2>1. Your Logica 2.0 files</h2>
     <p>Drop your Logica 2.0 dump here: either the hi and the lo file together (32-bit), in any order, or one 512 KB file (an emulator or 16-bit image).
@@ -92,6 +115,8 @@ footer p { max-width: none; }
     <p class="what">A500 / A600: one 16-bit ROM (untested on these models)</p>
     <div class="dl" id="dl-16p"></div>
     <p class="note">Same data, other byte order. If a burned set does not boot, try this one. The 16-bit file also suits flash ROM adapters that take a plain image.</p>
+    <p class="note">For a 27C800, 27C160 or MX29F1615 instead of a 27C400:
+      <button class="link" id="to-fit">fit this Logica 2.1 to another chip</button>.</p>
   </section>
 
   <section class="card">
@@ -128,6 +153,69 @@ footer p { max-width: none; }
     <p class="note" style="margin-top:10px">Now and then a keystroke is lost; press it again. A wrong key is never received.</p>
   </section>
 
+  </div>
+
+  <div role="tabpanel" id="panel-fit" aria-labelledby="tab-fit" hidden>
+  <section class="card">
+    <h2>1. One ROM image</h2>
+    <p>Any Amiga ROM image of 256 or 512 KB: a Kickstart, a diagnostic ROM, Logica 2.1 from the other tab. As an emulator
+      uses it or byte-swapped; the byte order is found from the start of the image. It stays on your computer.</p>
+    <div id="fit-drop" class="drop" tabindex="0" role="button" aria-label="Choose one ROM image">
+      <strong>Drop one ROM image here, or click to choose</strong>
+      <span>for example kick40068.A1200 or logica21-emulator.rom</span>
+    </div>
+    <input id="fit-file" type="file" hidden>
+    <p id="fit-status" class="status" role="status"></p>
+
+    <fieldset id="fit-model">
+      <legend>2. Amiga model</legend>
+      <label class="opt"><input type="radio" name="model" value="a500" checked> A500 / A600 / A2000
+        <span>one 16-bit ROM chip</span></label>
+      <label class="opt"><input type="radio" name="model" value="a1200"> A1200 / A4000
+        <span>two chips, hi and lo (32-bit); needs a 512 KB image</span></label>
+    </fieldset>
+
+    <fieldset id="fit-chip">
+      <legend>3. Chip</legend>
+      <label class="opt"><input type="radio" name="chip" value="27c400"> 27C400
+        <span>512 KB, 40 pins</span></label>
+      <label class="opt"><input type="radio" name="chip" value="27c800"> 27C800
+        <span>1 MB, 42 pins</span></label>
+      <label class="opt"><input type="radio" name="chip" value="27c160" checked> 27C160 / MX29F1615
+        <span>2 MB, 42 pins</span></label>
+    </fieldset>
+  </section>
+
+  <section class="card" id="fit-out" hidden>
+    <h2>4. Download</h2>
+    <p id="fit-what" class="note"></p>
+    <h3>Byte-swapped (for burning and flashing)</h3>
+    <p class="note">The byte order of most EPROM programmers (TL866, T48) for a 16-bit chip.</p>
+    <div class="dl" id="fit-dl-sw"></div>
+    <h3>Not byte-swapped</h3>
+    <p class="note">Same data, other byte order. If a burned chip does not boot, try this one.</p>
+    <div class="dl" id="fit-dl-plain"></div>
+  </section>
+
+  <section class="card">
+    <h2>Why the image is repeated</h2>
+    <p>Every Amiga ROM chip is 16 bits wide. A 27C400 holds 512 KB, which is all the Amiga's ROM area asks for.
+      A 27C800 or a 27C160 / MX29F1615 has one or two address lines more (A18, A19), which the Amiga does not
+      use to pick anything: depending on the board they are tied high, tied low, set by a jumper or left free. So the image is written
+      again and again until the chip is full; whatever those lines do, the chip answers with the same ROM.</p>
+    <ul>
+      <li>A500 / A600 / A2000: the image once per 512 KB (a 256 KB Kickstart 1.x twice per 512 KB):
+        1 copy on a 27C400, 2 on a 27C800, 4 on a 27C160 / MX29F1615.</li>
+      <li>A1200 / A4000: the image is split into its hi and lo halves of 256 KB each, and each half is repeated:
+        2 copies per chip on a 27C400, 4 on a 27C800, 8 on a 27C160 / MX29F1615.</li>
+    </ul>
+    <p class="note" style="margin-top:10px">This only fits the image to the chip; the ROM itself must suit the model (a Kickstart
+      made for the A1200 will not boot an A500). A 40-pin chip in a 42-pin socket leaves the socket's two end pins free;
+      check the board for which end. A 42-pin chip in a 40-pin socket needs an adapter that ties its extra address pins.
+      The MX29F1615 needs a programmer (or adapter) that supports it.</p>
+  </section>
+  </div>
+
   <footer>
     <p><em>THE DIAGNOSTIC 2.0</em> is © Logica S.N.C., who wrote the original program and its tests.
       Logica 2.1 – Serial Edition is an independent patch, not affiliated with or endorsed by Logica.
@@ -137,11 +225,11 @@ footer p { max-width: none; }
 </main>
 
 <script type="module">
-import { build } from "./patcher.js";
+import { build, fitRom, CHIPS, MODELS } from "./patcher.js";
 
 const $ = (id) => document.getElementById(id);
 const drop = $("drop"), input = $("file"), status = $("status");
-let data;
+let data, patched;
 
 function say(text, cls) { status.textContent = text; status.className = cls || ""; }
 
@@ -192,11 +280,83 @@ async function handle(files) {
     $("dl-16").replaceChildren(link("logica21-16bit-swapped.rom", f["logica21-16bit-swapped.rom"]));
     $("dl-16p").replaceChildren(link("logica21-16bit.rom", f["logica21-16bit.rom"], true));
     $("out").hidden = false;
+    patched = f["logica21-emulator.rom"];
     say(`Genuine Logica 2.0 found (${r.how}). Patched to ${data.version}.`, "ok");
   } catch (e) {
     say(e.message, "err");
   }
 }
+
+// Tabs: "#fit" in the address selects the second one.
+const tabs = [["patch", $("tab-patch"), $("panel-patch")], ["fit", $("tab-fit"), $("panel-fit")]];
+function selectTab(name, focus) {
+  for (const [n, tab, panel] of tabs) {
+    const on = n === name;
+    tab.setAttribute("aria-selected", on); tab.tabIndex = on ? 0 : -1; panel.hidden = !on;
+    if (on && focus) tab.focus();
+  }
+  history.replaceState(null, "", name === "fit" ? "#fit" : location.pathname + location.search);
+}
+tabs.forEach(([n, tab], i) => {
+  tab.addEventListener("click", () => selectTab(n));
+  tab.addEventListener("keydown", (e) => {
+    const d = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+    if (d) { e.preventDefault(); selectTab(tabs[(i + d + tabs.length) % tabs.length][0], true); }
+  });
+});
+if (location.hash === "#fit") selectTab("fit");
+
+// Fit a ROM to an EPROM.
+const fitUrls = [], fitSay = (text, cls) => { const el = $("fit-status"); el.textContent = text; el.className = "status " + (cls || ""); };
+let fitSrc = null, fitBase = "rom";
+const picked = (name) => document.querySelector(`input[name="${name}"]:checked`).value;
+function fitLink(name, bytes, alt) {
+  const a = document.createElement("a");
+  const url = URL.createObjectURL(new Blob([bytes], { type: "application/octet-stream" }));
+  fitUrls.push(url);
+  a.href = url; a.download = name; a.textContent = name;
+  if (alt) a.className = "alt";
+  return a;
+}
+function refit() {
+  $("fit-out").hidden = true;
+  fitUrls.splice(0).forEach(URL.revokeObjectURL);
+  if (!fitSrc) return;
+  const model = picked("model"), chip = picked("chip");
+  try {
+    const r = fitRom(fitSrc, model, chip, fitBase);
+    const c = CHIPS[chip], m = MODELS[model];
+    const per = m.wide === 16 ? fitSrc.length : fitSrc.length / 2;
+    $("fit-dl-sw").replaceChildren(...r.files.filter((f) => f.swapped).map((f) => fitLink(f.name, f.bytes)));
+    $("fit-dl-plain").replaceChildren(...r.files.filter((f) => !f.swapped).map((f) => fitLink(f.name, f.bytes, true)));
+    $("fit-what").textContent = `${m.label}, ${m.wide === 16 ? "one" : "two"} ${c.label} (${c.size / 1024} KB each): `
+      + `${m.wide === 16 ? "the image" : "each 256 KB half"} written ${c.size / per} times`
+      + (m.wide === 32 ? "; burn the hi file into the hi socket's chip, the lo file into the lo one." : ".");
+    $("fit-out").hidden = false;
+    fitSay(`${fitSrc.length / 1024} KB Amiga ROM image, ${r.order === "plain" ? "as an emulator uses it" : "byte-swapped"}.`, "ok");
+  } catch (e) {
+    fitSay(e.message, "err");
+  }
+}
+function fitUse(bytes, name) {
+  fitSrc = bytes;
+  fitBase = (name.replace(/\.[^.]*$/, "").replace(/[^A-Za-z0-9._-]+/g, "-") || "rom").replace(/-(emulator|16bit)$/, "");
+  refit();
+}
+async function fitHandle(list) {
+  const files = [...list];                     // the input's list is cleared right after
+  if (files.length !== 1) { fitSrc = null; refit(); return fitSay("Choose one ROM image file.", "err"); }
+  fitUse(new Uint8Array(await files[0].arrayBuffer()), files[0].name);
+}
+document.querySelectorAll('input[name="model"], input[name="chip"]').forEach((el) => el.addEventListener("change", refit));
+const fd = $("fit-drop"), fi = $("fit-file");
+fd.addEventListener("click", () => fi.click());
+fd.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fi.click(); } });
+fi.addEventListener("change", () => { fitHandle(fi.files); fi.value = ""; });
+fd.addEventListener("dragover", (e) => { e.preventDefault(); fd.classList.add("over"); });
+fd.addEventListener("dragleave", () => fd.classList.remove("over"));
+fd.addEventListener("drop", (e) => { e.preventDefault(); fd.classList.remove("over"); fitHandle(e.dataTransfer.files); });
+$("to-fit").addEventListener("click", () => { if (patched) { fitUse(patched, "logica21"); selectTab("fit", true); } });
 
 drop.addEventListener("click", () => input.click());
 drop.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); input.click(); } });

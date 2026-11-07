@@ -290,3 +290,69 @@ export async function build(files, data) {
     },
   };
 }
+
+// --- Fit any Amiga ROM image to a physical EPROM or flash chip ---------------
+//
+// An Amiga ROM chip is 16 bits wide. A bigger chip than the ROM needs (a
+// 27C800, or a 27C160 / MX29F1615 in a 42-pin socket) has address lines the
+// Amiga does not drive to a known image, so the image is repeated to fill the
+// whole chip: whatever level those lines sit at, the chip returns the ROM.
+
+export const CHIPS = {
+  "27c400": { size: 512 * 1024, label: "27C400", pins: 40 },
+  "27c800": { size: 1024 * 1024, label: "27C800", pins: 42 },
+  "27c160": { size: 2048 * 1024, label: "27C160 / MX29F1615", pins: 42 },
+};
+
+export const MODELS = {
+  a500: { label: "A500 / A600 / A2000", wide: 16 },
+  a1200: { label: "A1200 / A4000", wide: 32 },
+};
+
+// The byte order of a ROM image, from its first long: 11 1x 4E F9 (a jump,
+// as every Kickstart and Logica starts) read as the Amiga sees it, or with
+// the bytes of each word swapped.
+export function romOrder(img) {
+  if (img.length < 4 || (img[0] !== 0x11 && img[1] !== 0x11)) return null;
+  if (img[2] === 0x4e && img[3] === 0xf9) return "plain";
+  if (img[2] === 0xf9 && img[3] === 0x4e) return "swapped";
+  return null;
+}
+
+// `part` repeated to fill `size` bytes.
+export function fill(part, size) {
+  if (size % part.length) throw new Error("the chip size is not a multiple of the image");
+  const out = new Uint8Array(size);
+  for (let o = 0; o < size; o += part.length) out.set(part, o);
+  return out;
+}
+
+// One ROM image (256 or 512 KB, plain or byte-swapped) as chip files for a
+// model and chip, both byte orders. Returns {order, files: [{name, bytes,
+// swapped, chip}]} with "swapped" meaning the order of the burn set above
+// (the hi/lo files as Logica ships them, and most programmers' 16-bit order).
+export function fitRom(src, model, chip, base) {
+  const order = romOrder(src);
+  if (!order) throw new Error("This does not look like an Amiga ROM image: it does not start with 11 11 4E F9 or 11 14 4E F9, in either byte order.");
+  const img = order === "plain" ? src : swap(src);
+  const m = MODELS[model], c = CHIPS[chip];
+  if (!m || !c) throw new Error("unknown model or chip");
+  base = base || "rom";
+  const tag = chip;
+  const files = [];
+  if (m.wide === 16) {
+    if (img.length !== SIZE && img.length !== SIZE / 2) throw new Error("A 16-bit ROM image must be 256 KB or 512 KB.");
+    const plain = fill(img, c.size);
+    files.push({ name: `${base}-16bit-${tag}-swapped.bin`, bytes: swap(plain), swapped: true, chip: "" },
+               { name: `${base}-16bit-${tag}.bin`, bytes: plain, swapped: false, chip: "" });
+  } else {
+    if (img.length !== SIZE) throw new Error("An A1200 / A4000 ROM image must be 512 KB (the hi and lo halves together).");
+    const [hi, lo] = split(img).map((h) => h.subarray(0, SIZE / 2));
+    for (const [half, bytes] of [["hi", hi], ["lo", lo]]) {
+      const sw = fill(bytes, c.size);
+      files.push({ name: `${base}-${half}-${tag}-swapped.bin`, bytes: sw, swapped: true, chip: half },
+                 { name: `${base}-${half}-${tag}.bin`, bytes: swap(sw), swapped: false, chip: half });
+    }
+  }
+  return { order, files };
+}
