@@ -9,7 +9,8 @@
   {
    "date": "2026-11-07",
    "items": [
-    "New tab on the patcher, \"Fit a ROM to an EPROM\": drop one Amiga ROM image (256 or 512 KB, plain or byte-swapped: Logica 2.1, a Kickstart) and pick the model (A500/A600/A2000, or A1200/A4000) and chip (27C400, 27C800, 27C160 / MX29F1615). The image is repeated to fill the bigger chips. The ROM itself is unchanged."
+    "New tab on the patcher, \"Fit a ROM to an EPROM\": drop one Amiga ROM image (256 or 512 KB, plain or byte-swapped: Logica 2.1, a Kickstart) and pick the model (A500/A600/A2000, or A1200/A4000) and chip (27C400, 27C800, 27C160 / MX29F1615). The image is repeated to fill the bigger chips. The ROM itself is unchanged.",
+    "Tested on real hardware: Logica 2.1 (the byte-swapped 16-bit file) on an MX29F1615 boots an A500+ rev 8."
    ]
   },
   {

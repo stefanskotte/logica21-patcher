@@ -103,7 +103,7 @@ footer p { max-width: none; }
     <p class="note">The byte order of Logica's own files and of most EPROM programmers (TL866, T48).</p>
     <p class="what">A1200 / A4000: hi and lo pair</p>
     <div class="dl" id="dl-32"></div>
-    <p class="what">A500 / A600: one 16-bit ROM (untested on these models)</p>
+    <p class="what">A500 / A600: one 16-bit ROM (boots on an A500+; A600 untested)</p>
     <div class="dl" id="dl-16"></div>
 
     <h3>ROM, not byte-swapped (for emulators etc.)</h3>
@@ -112,7 +112,7 @@ footer p { max-width: none; }
     <p class="note">Select it as the Kickstart ROM of an A1200 configuration. Tested in WinUAE.</p>
     <p class="what">A1200 / A4000: hi and lo pair</p>
     <div class="dl" id="dl-32p"></div>
-    <p class="what">A500 / A600: one 16-bit ROM (untested on these models)</p>
+    <p class="what">A500 / A600: one 16-bit ROM (boots on an A500+; A600 untested)</p>
     <div class="dl" id="dl-16p"></div>
     <p class="note">Same data, other byte order. If a burned set does not boot, try this one. The 16-bit file also suits flash ROM adapters that take a plain image.</p>
     <p class="note">For a 27C800, 27C160 or MX29F1615 instead of a 27C400:
@@ -213,6 +213,8 @@ footer p { max-width: none; }
       made for the A1200 will not boot an A500). A 40-pin chip in a 42-pin socket leaves the socket's two end pins free;
       check the board for which end. A 42-pin chip in a 40-pin socket needs an adapter that ties its extra address pins.
       The MX29F1615 needs a programmer (or adapter) that supports it.</p>
+    <p class="note"><strong>Tested:</strong> Logica 2.1, the byte-swapped 16-bit file on an MX29F1615, boots an A500+ (rev 8 board).
+      The chip goes straight into all 42 holes of the socket, notch to notch; the original 40-pin Kickstart sits one row away from the notch.</p>
   </section>
   </div>
 
