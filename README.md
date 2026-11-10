@@ -7,7 +7,7 @@ A web page that patches your own dumps of Logica *THE DIAGNOSTIC 2.0*
 runs in your browser, and nothing is uploaded.
 
 It also makes a floppy disk (ADF) of Logica 2.0 with the address-report fix,
-which runs from RAM on any Amiga with 1 MB, without the console.
+which runs from RAM on any Amiga with 512K, without the console.
 
 A second tab fits any Amiga ROM image (256 or 512 KB) to a physical chip:
 one 16-bit chip for the A500/A600/A2000 or the hi/lo pair for the

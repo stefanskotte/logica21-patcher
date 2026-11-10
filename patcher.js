@@ -274,28 +274,100 @@ export function apply(img, data) {
 
 // --- The floppy edition (tools/adf_build.py, `make adf`) ---------------------
 //
-// data.adf.template is the disk with every byte of Logica's image zeroed
-// (gzip). The user's image goes back into Logica.data's data blocks (OFS: a
-// 24-byte header and 488 data bytes each), with the floppy patches, and
-// those blocks get their checksums again.
+// data.adf.template is the disk (gzip) with the packed parts of Logica.data
+// zeroed; the loader before them is ours and is there. The page patches the
+// user's image, puts it in the payload's order, packs the two parts
+// (lzCompress, the port of tools/lz.py: the same bytes), writes them into
+// Logica.data's data blocks (OFS: a 24-byte header and 488 data bytes each)
+// and redoes their checksums.
 
 async function gunzip(b) {
   const s = new Blob([b]).stream().pipeThrough(new DecompressionStream("gzip"));
   return new Uint8Array(await new Response(s).arrayBuffer());
 }
 
+// tools/lz.py compress(), step for step.
+export function lzCompress(d) {
+  const CHAIN = 32, MAXOFF = 65535, MIN = 4, n = d.length;
+  const head = new Map(), prev = new Int32Array(n).fill(-1);
+  let ins = 0;
+  const insertTo = (k) => {
+    while (ins < k && ins + 3 <= n) {
+      const key = d[ins] << 16 | d[ins + 1] << 8 | d[ins + 2];
+      const h = head.get(key);
+      prev[ins] = h === undefined ? -1 : h;
+      head.set(key, ins);
+      ins++;
+    }
+    ins = Math.max(ins, k);
+  };
+  const best = (i) => {
+    insertTo(i);
+    if (i + 3 > n) return [0, 0];
+    const h = head.get(d[i] << 16 | d[i + 1] << 8 | d[i + 2]);
+    let j = h === undefined ? -1 : h, bl = 0, bo = 0, c = 0;
+    while (j >= 0 && i - j <= MAXOFF && c < CHAIN) {
+      if (i + bl < n && d[j + bl] === d[i + bl]) {
+        let k = 0;
+        while (i + k < n && d[j + k] === d[i + k]) k++;
+        if (k > bl) { bl = k; bo = i - j; }
+      }
+      j = prev[j]; c++;
+    }
+    return [bl, bo];
+  };
+  const out = [];
+  const ext = (v) => { while (v >= 255) { out.push(255); v -= 255; } out.push(v); };
+  const seq = (ls, lit, ml, off) => {
+    out.push(Math.min(lit, 15) << 4 | (ml ? Math.min(ml - MIN, 15) : 0));
+    if (lit >= 15) ext(lit - 15);
+    for (let k = 0; k < lit; k++) out.push(d[ls + k]);
+    if (ml) {
+      out.push(off >> 8, off & 0xff);
+      if (ml - MIN >= 15) ext(ml - MIN - 15);
+    }
+  };
+  let i = 0, ls = 0, nxt = null;
+  while (i < n) {
+    const [l, o] = nxt || best(i);
+    nxt = null;
+    if (l >= MIN && i + 1 < n) {
+      nxt = best(i + 1);
+      if (nxt[0] > l + 1) { i++; continue; }
+      nxt = null;
+    }
+    if (l >= MIN) { seq(ls, i - ls, l, o); i += l; ls = i; } else i++;
+  }
+  seq(ls, n - ls, 0, 0);
+  return Uint8Array.from(out);
+}
+
 export async function floppy(img, data) {
   const a = data.adf;
   const disk = await gunzip(unbase64(a.template));
-  const im = img.slice(0, a.image_len);
+  const table = unbase64(a.table);
+  const im = img.slice();
   for (const p of a.patches) im.set(unhex(p.bytes), p.addr - data.base);
-  const blocks = a.blocks.flatMap(([b, n]) => Array.from({ length: n }, (_, i) => b + i));
-  const at = (q) => blocks[Math.floor(q / 488)] * 512 + 24 + (q % 488);
-  for (let k = 0; k < im.length; k++) disk[at(a.image_off + k)] = im[k];
-  const first = Math.floor(a.image_off / 488);
-  const last = Math.floor((a.image_off + im.length - 1) / 488);
+  // the payload's order: the AGA pictures last, the longs pointing at moved
+  // data remapped (tools/adf_build.py body())
+  const n = a.segs.reduce((t, [, len]) => t + len, 0);
+  const image = new Uint8Array(n);
+  let at = 0;
+  for (const [off, len] of a.segs) { image.set(im.subarray(off, off + len), at); at += len; }
+  const iv = new DataView(image.buffer);
+  for (const [off, val] of a.fixes) iv.setUint32(off, val);
+  const partA = new Uint8Array(table.length + a.lite);
+  partA.set(table); partA.set(image.subarray(0, a.lite), table.length);
+  const packed = [lzCompress(partA), lzCompress(image.subarray(a.lite))];
+  if (packed[0].length !== a.packed_len[0] || packed[1].length !== a.packed_len[1]) {
+    throw new Error("The floppy came out wrong (packed size). Please report this.");
+  }
+  const blocks = a.blocks.flatMap(([b, k]) => Array.from({ length: k }, (_, i) => b + i));
+  const pos = (q) => blocks[Math.floor(q / 488)] * 512 + 24 + (q % 488);
+  let q = a.packed_off;
+  for (const p of packed) for (let k = 0; k < p.length; k++) disk[pos(q++)] = p[k];
   const v = new DataView(disk.buffer);
-  for (let i = first; i <= last; i++) {
+  for (let i = Math.floor(a.packed_off / 488); i <= Math.floor((q - 1) / 488); i++) {
     const o = blocks[i] * 512;
     v.setUint32(o + 20, 0);
     let s = 0;
