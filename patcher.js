@@ -272,14 +272,50 @@ export function apply(img, data) {
   return out;
 }
 
-// The burn set of `make logica21-burn` (build/burn/), as {name: bytes}.
+// --- The floppy edition (tools/adf_build.py, `make adf`) ---------------------
+//
+// data.adf.template is the disk with every byte of Logica's image zeroed
+// (gzip). The user's image goes back into Logica.data's data blocks (OFS: a
+// 24-byte header and 488 data bytes each), with the floppy patches, and
+// those blocks get their checksums again.
+
+async function gunzip(b) {
+  const s = new Blob([b]).stream().pipeThrough(new DecompressionStream("gzip"));
+  return new Uint8Array(await new Response(s).arrayBuffer());
+}
+
+export async function floppy(img, data) {
+  const a = data.adf;
+  const disk = await gunzip(unbase64(a.template));
+  const im = img.slice(0, a.image_len);
+  for (const p of a.patches) im.set(unhex(p.bytes), p.addr - data.base);
+  const blocks = a.blocks.flatMap(([b, n]) => Array.from({ length: n }, (_, i) => b + i));
+  const at = (q) => blocks[Math.floor(q / 488)] * 512 + 24 + (q % 488);
+  for (let k = 0; k < im.length; k++) disk[at(a.image_off + k)] = im[k];
+  const first = Math.floor(a.image_off / 488);
+  const last = Math.floor((a.image_off + im.length - 1) / 488);
+  const v = new DataView(disk.buffer);
+  for (let i = first; i <= last; i++) {
+    const o = blocks[i] * 512;
+    v.setUint32(o + 20, 0);
+    let s = 0;
+    for (let j = 0; j < 512; j += 4) s = (s + v.getUint32(o + j)) >>> 0;
+    v.setUint32(o + 20, (-s) >>> 0);
+  }
+  return disk;
+}
+
+// The burn set of `make logica21-burn` (build/burn/), plus the floppy
+// (`make adf`) when the patch data has it, as {name: bytes}.
 export async function build(files, data) {
   const { img, how } = await identify(files, data);
   const rom = apply(img, data);
   const [hi, lo] = split(rom);
+  const extra = data.adf ? { "logica-floppy.adf": await floppy(img, data) } : {};
   return {
     how,
     files: {
+      ...extra,
       "logica21-a1200-hi-swapped.rom": hi,
       "logica21-a1200-lo-swapped.rom": lo,
       "logica21-a1200-hi.rom": swap(hi),

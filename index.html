@@ -117,6 +117,14 @@ footer p { max-width: none; }
     <p class="note">Same data, other byte order. If a burned set does not boot, try this one. The 16-bit file also suits flash ROM adapters that take a plain image.</p>
     <p class="note">For a 27C800, 27C160 or MX29F1615 instead of a 27C400:
       <button class="link" id="to-fit">fit this Logica 2.1 to another chip</button>.</p>
+
+    <h3>Floppy disk (ADF), no EPROM needed</h3>
+    <p class="what">Any Amiga with 1 MB of RAM, Kickstart 1.3 or later</p>
+    <div class="dl" id="dl-adf"></div>
+    <p class="note">Logica 2.0 with the ADDRESS ERROR REPORT fix, loaded from floppy into RAM. It has no serial/parallel console:
+      that is 2.1's ROM only. Boot from the disk, or double-click its Logica icon in Workbench; hold the left mouse button
+      while booting to get an ordinary AmigaDOS disk. It needs 1 MB: 512K chip RAM plus 512K slow or fast RAM, or 1 MB chip RAM.
+      The ROM checksum test is skipped, and a missing keyboard is not reported. Tested in WinUAE, not yet on a real Amiga.</p>
   </section>
 
   <section class="card">
@@ -281,6 +289,8 @@ async function handle(files) {
     $("dl-emu").replaceChildren(link("logica21-emulator.rom", f["logica21-emulator.rom"]));
     $("dl-16").replaceChildren(link("logica21-16bit-swapped.rom", f["logica21-16bit-swapped.rom"]));
     $("dl-16p").replaceChildren(link("logica21-16bit.rom", f["logica21-16bit.rom"], true));
+    const adf = f["logica-floppy.adf"];
+    $("dl-adf").replaceChildren(...(adf ? [link("logica-floppy.adf", adf)] : []));
     $("out").hidden = false;
     patched = f["logica21-emulator.rom"];
     say(`Genuine Logica 2.0 found (${r.how}). Patched to ${data.version}.`, "ok");

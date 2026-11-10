@@ -6,6 +6,9 @@ A web page that patches your own dumps of Logica *THE DIAGNOSTIC 2.0*
 (the A1200/A4000 hi and lo EPROMs, or one 512 KB emulator or 16-bit image) into Logica 2.1 – Serial Edition. It
 runs in your browser, and nothing is uploaded.
 
+It also makes a floppy disk (ADF) of Logica 2.0 with the address-report fix,
+which runs from RAM on any Amiga with 1 MB, without the console.
+
 A second tab fits any Amiga ROM image (256 or 512 KB) to a physical chip:
 one 16-bit chip for the A500/A600/A2000 or the hi/lo pair for the
 A1200/A4000, on a 27C400, 27C800 or 27C160 / MX29F1615, with the image
@@ -26,6 +29,8 @@ update.
   - our own 68k code for Logica's free ROM area;
   - the list of patch sites;
   - the SHA-256 of the genuine Logica 2.0 image the patch applies to;
+  - the floppy disk with Logica's image left out (zeros), which the page
+    fills in from your files;
   - the changelog.
 - `logica21-console-cable.pdf`: the console cable wiring sheet.
 
