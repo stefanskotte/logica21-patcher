@@ -9,7 +9,7 @@ runs in your browser, and nothing is uploaded.
 It also makes a floppy disk (ADF) of Logica 2.0 with the address-report fix,
 which runs from RAM on any Amiga with 512K, without the console.
 
-A second tab fits any Amiga ROM image (256 or 512 KB) to a physical chip:
+A second page fits any Amiga ROM image (256 or 512 KB) to a physical chip:
 one 16-bit chip for the A500/A600/A2000 or the hi/lo pair for the
 A1200/A4000, on a 27C400, 27C800 or 27C160 / MX29F1615, with the image
 repeated to fill the bigger chips.

@@ -20,8 +20,22 @@
   --accent: #6ea8ff; --accent-fg: #0b1220; --ok: #4ade80; --err: #f87171; --drop: #1b2236; color-scheme: dark }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.55 var(--sans); }
-main { max-width: 760px; margin: 0 auto; padding: 40px 16px 56px; display: grid; gap: 32px; }
-h1 { font-size: 1.75rem; margin: 0; line-height: 1.2; }
+main { max-width: 980px; margin: 0 auto; padding: 32px 16px 56px; display: grid; gap: 28px; }
+.top { position: sticky; top: 0; z-index: 10; background: var(--card); border-bottom: 1px solid var(--line); }
+.bar { max-width: 980px; margin: 0 auto; padding: 10px 16px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 24px; }
+.brand { font-weight: 700; color: var(--fg); text-decoration: none; white-space: nowrap; }
+.brand span { color: var(--muted); font-weight: 500; }
+.top nav { display: flex; flex-wrap: wrap; gap: 2px 4px; }
+.top nav a { color: var(--muted); text-decoration: none; font-size: 0.95rem; padding: 6px 10px; border-radius: 6px; white-space: nowrap; }
+.top nav a:hover { color: var(--fg); background: var(--bg); }
+.top nav a[aria-current="page"] { color: var(--fg); background: var(--bg); font-weight: 600; }
+.hero { display: grid; gap: 4px; }
+.hero p { max-width: 80ch; }
+.hero .lead { font-size: 1.1rem; }
+.gets { margin: 0 0 10px; }
+.cols { display: grid; gap: 8px 40px; }
+@media (min-width: 820px) { .cols { grid-template-columns: 3fr 2fr; } }
+h1 { font-size: 2rem; margin: 0; line-height: 1.2; }
 h2 { font-size: 1.15rem; margin: 0 0 12px; }
 h3 { font-size: 1rem; margin: 18px 0 6px; }
 p { margin: 0 0 10px; max-width: 68ch; }
@@ -50,12 +64,8 @@ details summary { cursor: pointer; color: var(--accent); margin-top: 12px; }
 table { border-collapse: collapse; width: 100%; font-size: 0.92rem; }
 td { padding: 5px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
 td:first-child { white-space: nowrap; font-family: var(--mono); }
-.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-bottom: -16px; flex-wrap: wrap; }
-.tabs button { font: 600 0.95rem var(--sans); color: var(--muted); background: none; border: 1px solid transparent;
-  border-bottom: 0; border-radius: 6px 6px 0 0; padding: 8px 14px; cursor: pointer; margin-bottom: -1px; }
-.tabs button[aria-selected="true"] { color: var(--fg); background: var(--card); border-color: var(--line); }
-[role="tabpanel"] { display: grid; gap: 32px; }
-[role="tabpanel"][hidden] { display: none; }
+.page { display: grid; gap: 28px; }
+.page[hidden] { display: none; }
 fieldset { border: 0; padding: 0; margin: 14px 0 0; display: grid; gap: 6px; }
 legend { font-weight: 600; padding: 0; margin-bottom: 6px; }
 label.opt { display: flex; gap: 8px; align-items: baseline; cursor: pointer; }
@@ -72,23 +82,37 @@ footer p { max-width: none; }
 </style>
 </head>
 <body>
+<header class="top">
+  <div class="bar">
+    <a class="brand" href="#">Logica 2.1 <span>Serial Edition</span></a>
+    <nav aria-label="Sections">
+      <a href="#" data-page="home">Patch</a>
+      <a href="#new" data-page="new">What's new</a>
+      <a href="#about" data-page="about">What the patch does</a>
+      <a href="#adapters" data-page="adapters">Build adapters</a>
+      <a href="#fit" data-page="fit">Fit a ROM</a>
+    </nav>
+  </div>
+</header>
 <main>
-  <header>
+
+  <div class="page" id="page-home">
+  <section class="hero">
     <h1>Logica 2.1 – Serial Edition</h1>
-    <p class="sub">Turns your own Logica <em>THE DIAGNOSTIC 2.0</em> EPROMs (A1200/A4000) into 2.1: every screen and menu also on a
-      serial terminal, so you can diagnose an Amiga with no working video. Patch <span id="ver">…</span>.</p>
-  </header>
+    <p class="lead">Patches your original Logica <em>THE DIAGNOSTIC 2.0</em> ROMs with a serial and parallel console:
+      every screen and menu also on a terminal, so you can diagnose an Amiga with no working video.</p>
+    <p>After patching you get:</p>
+    <ul class="gets">
+      <li><strong>ROM files</strong> for an emulator, or for burning to EPROM (A500/A600/A2000 and A1200/A4000).</li>
+      <li><strong>A floppy disk (ADF)</strong> of Logica that boots like any other floppy, for an Amiga without a Logica EPROM.</li>
+    </ul>
+    <p class="note">Everything happens in your browser; your files are never uploaded. Patch <span id="ver">…</span>.</p>
+  </section>
 
-  <nav class="tabs" role="tablist" aria-label="Tools">
-    <button role="tab" id="tab-patch" aria-controls="panel-patch" aria-selected="true">Patch Logica 2.0</button>
-    <button role="tab" id="tab-fit" aria-controls="panel-fit" aria-selected="false" tabindex="-1">Fit a ROM to an EPROM</button>
-  </nav>
-
-  <div role="tabpanel" id="panel-patch" aria-labelledby="tab-patch">
   <section class="card">
     <h2>1. Your Logica 2.0 files</h2>
     <p>Drop your Logica 2.0 dump here: either the hi and the lo file together (32-bit), in any order, or one 512 KB file (an emulator or 16-bit image).
-      Both work as read or byte-swapped. They are patched on your computer and never uploaded.</p>
+      Both work as read or byte-swapped.</p>
     <div id="drop" tabindex="0" role="button" aria-label="Choose one Logica 2.0 ROM file or the hi and lo pair">
       <strong>Drop one ROM file or the hi and lo pair here, or click to choose</strong>
       <span>for example logica-dialoga-200.rom, or logica-hi-a1200-a4000.rom and logica-lo-a1200-a4000.rom</span>
@@ -99,14 +123,16 @@ footer p { max-width: none; }
 
   <section class="card" id="out" hidden>
     <h2>2. Download</h2>
-    <h3>Byte-swapped (for burning and flashing)</h3>
+    <div class="cols">
+    <div>
+    <h3>ROM files, byte-swapped (for burning and flashing)</h3>
     <p class="note">The byte order of Logica's own files and of most EPROM programmers (TL866, T48).</p>
     <p class="what">A1200 / A4000: hi and lo pair</p>
     <div class="dl" id="dl-32"></div>
     <p class="what">A500 / A600: one 16-bit ROM (boots on an A500+; A600 untested)</p>
     <div class="dl" id="dl-16"></div>
 
-    <h3>ROM, not byte-swapped (for emulators etc.)</h3>
+    <h3>ROM files, not byte-swapped (for emulators etc.)</h3>
     <p class="what">Emulators: one 512 KB image</p>
     <div class="dl" id="dl-emu"></div>
     <p class="note">Select it as the Kickstart ROM of an A1200 configuration. Tested in WinUAE.</p>
@@ -117,21 +143,30 @@ footer p { max-width: none; }
     <p class="note">Same data, other byte order. If a burned set does not boot, try this one. The 16-bit file also suits flash ROM adapters that take a plain image.</p>
     <p class="note">For a 27C800, 27C160 or MX29F1615 instead of a 27C400:
       <button class="link" id="to-fit">fit this Logica 2.1 to another chip</button>.</p>
-
+    </div>
+    <div>
     <h3>Floppy disk (ADF), no EPROM needed</h3>
     <p class="what">Any Amiga with 512K of RAM, Kickstart 1.3 or later</p>
     <div class="dl" id="dl-adf"></div>
     <p class="note">Logica 2.0 with the ADDRESS ERROR REPORT fix, loaded from floppy into RAM. It has no serial/parallel console:
       that is 2.1's ROM only. Boot from the disk, or double-click its Logica icon in Workbench; hold the left mouse button
-      while booting to get an ordinary AmigaDOS disk. With 1 MB or more it is complete. On a 512K Amiga it leaves out the AGA pictures (an OCS/ECS Amiga can't show them) and lives in the top half of chip RAM, so only the lower 256K of chip RAM can be tested.
+      while booting to get an ordinary AmigaDOS disk.</p>
+    <p class="note">With 1 MB or more it is complete. On a 512K Amiga it leaves out the AGA pictures (an OCS/ECS Amiga can't show them)
+      and lives in the top half of chip RAM, so only the lower 256K of chip RAM can be tested.
       The ROM checksum test is skipped, and a missing keyboard is not reported. Tested in WinUAE, not yet on a real Amiga.</p>
+    </div>
+    </div>
   </section>
+  </div>
 
+  <div class="page" id="page-new" hidden>
   <section class="card">
     <h2>What's new</h2>
     <div id="changes"><p class="note">Loading…</p></div>
   </section>
+  </div>
 
+  <div class="page" id="page-about" hidden>
   <section class="card">
     <h2>What the patch does</h2>
     <ul>
@@ -139,14 +174,14 @@ footer p { max-width: none; }
         one line per boot step, then every screen Logica draws (VT100/ANSI, 80×25).</li>
       <li>The same console on the <strong>serial port</strong>, for a board whose CIAs are dead.</li>
       <li>The menus and tests are driven from the terminal's keyboard. Logica's tests themselves are unchanged and give the same verdicts as 2.0.</li>
+      <li>The whole boot log stays on the terminal, followed by a summary of the CPU, FPU and RAM found.</li>
       <li>The power LED blinks during boot, a sign of life even without a terminal. The old step LEDs are gone.</li>
       <li>The title, About pages and version say <strong>THE DIAGNOSTIC 2.1</strong>, with "Serial goes Parallel" below.</li>
+      <li>Logica 2.0's memory ADDRESS ERROR REPORT bug is fixed: the failing chip is marked on the right block.</li>
     </ul>
 
-    <h3>Terminal and cable</h3>
-    <p>9600 baud, 8N1, no flow control, VT100/ANSI. On the parallel port, use a 5 V (or 5 V tolerant 3.3 V) USB-TTL adapter,
-      never an RS-232 one: pin 11 to the adapter's RX, pins 10 and 12 tied together and wired straight to its TX (no resistor), pins 18–25 to GND.
-      <a href="logica21-console-cable.pdf">Wiring sheet (PDF)</a>. On the serial port, use an ordinary RS-232 adapter with a null-modem cable.</p>
+    <h3>Terminal</h3>
+    <p>9600 baud, 8N1, no flow control, VT100/ANSI. To connect one, see <a href="#adapters">Build adapters</a>.</p>
 
     <h3>Keys</h3>
     <table>
@@ -160,10 +195,33 @@ footer p { max-width: none; }
     </table>
     <p class="note" style="margin-top:10px">Now and then a keystroke is lost; press it again. A wrong key is never received.</p>
   </section>
-
   </div>
 
-  <div role="tabpanel" id="panel-fit" aria-labelledby="tab-fit" hidden>
+  <div class="page" id="page-adapters" hidden>
+  <section class="card">
+    <h2>Build adapters</h2>
+    <p>The console needs a way from the Amiga's port to a USB port on your computer.</p>
+    <h3>Parallel port cable (simplest)</h3>
+    <p>Use a 5 V (or 5 V tolerant 3.3 V) USB-TTL adapter, never an RS-232 one, and a DB25 male plug:</p>
+    <table>
+      <tr><td>Pin 11 (BUSY)</td><td>to the adapter's RX</td></tr>
+      <tr><td>Pins 10 and 12</td><td>tied together, wired straight to the adapter's TX (no resistor)</td></tr>
+      <tr><td>Pins 18–25</td><td>to the adapter's GND</td></tr>
+    </table>
+    <p style="margin-top:10px"><a href="logica21-console-cable.pdf">Wiring sheet (PDF)</a></p>
+    <h3>Serial port</h3>
+    <p>An ordinary USB to RS-232 adapter with a null-modem cable to the Amiga's DB25 serial port.</p>
+    <h3>USB-C adapter boards</h3>
+    <p class="note">Small boards that plug straight into the parallel or the serial port, with USB-C on the other end, are being tested.
+      Their files will be published here once the first ones are built and work.</p>
+  </section>
+  </div>
+
+  <div class="page" id="page-fit" hidden>
+  <section class="hero">
+    <h1>Fit a ROM to an EPROM</h1>
+    <p class="lead">Repeats any Amiga ROM image to fill a 27C400, 27C800 or 27C160 / MX29F1615, for one 16-bit chip or the A1200/A4000 hi/lo pair.</p>
+  </section>
   <section class="card">
     <h2>1. One ROM image</h2>
     <p>Any Amiga ROM image of 256 or 512 KB: a Kickstart, a diagnostic ROM, Logica 2.1 from the other tab. As an emulator
@@ -299,24 +357,24 @@ async function handle(files) {
   }
 }
 
-// Tabs: "#fit" in the address selects the second one.
-const tabs = [["patch", $("tab-patch"), $("panel-patch")], ["fit", $("tab-fit"), $("panel-fit")]];
-function selectTab(name, focus) {
-  for (const [n, tab, panel] of tabs) {
-    const on = n === name;
-    tab.setAttribute("aria-selected", on); tab.tabIndex = on ? 0 : -1; panel.hidden = !on;
-    if (on && focus) tab.focus();
-  }
-  history.replaceState(null, "", name === "fit" ? "#fit" : location.pathname + location.search);
-}
-tabs.forEach(([n, tab], i) => {
-  tab.addEventListener("click", () => selectTab(n));
-  tab.addEventListener("keydown", (e) => {
-    const d = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
-    if (d) { e.preventDefault(); selectTab(tabs[(i + d + tabs.length) % tabs.length][0], true); }
+// Pages: the address's #hash picks one (#new, #about, #adapters, #fit).
+const pages = ["home", "new", "about", "adapters", "fit"];
+function show(name) {
+  if (!pages.includes(name)) name = "home";
+  for (const p of pages) $("page-" + p).hidden = p !== name;
+  document.querySelectorAll(".top nav a").forEach((a) => {
+    if (a.dataset.page === name) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
   });
-});
-if (location.hash === "#fit") selectTab("fit");
+}
+function selectTab(name) {
+  const hash = name === "home" ? "" : "#" + name;
+  if (location.hash !== hash) history.pushState(null, "", hash || location.pathname + location.search);
+  show(name);
+  window.scrollTo(0, 0);
+}
+window.addEventListener("popstate", () => show(location.hash.slice(1)));
+window.addEventListener("hashchange", () => { show(location.hash.slice(1)); window.scrollTo(0, 0); });
+show(location.hash.slice(1));
 
 // Fit a ROM to an EPROM.
 const fitUrls = [], fitSay = (text, cls) => { const el = $("fit-status"); el.textContent = text; el.className = "status " + (cls || ""); };
@@ -368,7 +426,7 @@ fi.addEventListener("change", () => { fitHandle(fi.files); fi.value = ""; });
 fd.addEventListener("dragover", (e) => { e.preventDefault(); fd.classList.add("over"); });
 fd.addEventListener("dragleave", () => fd.classList.remove("over"));
 fd.addEventListener("drop", (e) => { e.preventDefault(); fd.classList.remove("over"); fitHandle(e.dataTransfer.files); });
-$("to-fit").addEventListener("click", () => { if (patched) { fitUse(patched, "logica21"); selectTab("fit", true); } });
+$("to-fit").addEventListener("click", () => { if (patched) { fitUse(patched, "logica21"); selectTab("fit"); } });
 
 drop.addEventListener("click", () => input.click());
 drop.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); input.click(); } });
