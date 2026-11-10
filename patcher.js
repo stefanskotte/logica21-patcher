@@ -199,7 +199,8 @@ function packRow(row) {
   return out;
 }
 
-// patches.py _logo: Logica's title logo with "VERSION 2.0" -> "2.1".
+// patches.py _logo: Logica's title logo with "VERSION 2.0" -> "2.1" and
+// LOGICA -> LOGICAL.
 function logo(img, data, len) {
   const L = data.logo, o = L.src - data.base;
   const chunks = ilbmChunks(img.subarray(o, o + 8 + u32(img, o + 4)));
@@ -234,6 +235,18 @@ function logo(img, data, len) {
     for (let x = a; x <= b; x++) {
       const v = get(x, y);
       put(x + L.dx, y + L.dy, v === L.tan ? L.blue : v);
+    }
+  }
+  // LOGICA -> LOGICAL: the first L's pixels (colours 1-10) right of the A.
+  const [lx0, ly0, lx1, ly1] = L.l_src;
+  for (let y = ly0; y <= ly1; y++) {
+    for (let x = lx0; x <= lx1; x++) {
+      const v = get(x, y);
+      if (v >= 1 && v <= 10) {
+        const d = get(x + L.l_dx, y);
+        if (d !== 0 && d !== 11 && d !== 12 && d !== 13) throw new Error("logo: L overlaps a letter");
+        put(x + L.l_dx, y, v);
+      }
     }
   }
   c.BODY = Uint8Array.from(rows.flatMap((r) => r.flatMap((p) => packRow(p))));
