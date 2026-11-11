@@ -359,7 +359,10 @@ export async function floppy(img, data) {
   const a = data.adf;
   const disk = await gunzip(unbase64(a.template));
   const table = unbase64(a.table);
-  const im = img.slice();
+  // Logica 2.1 with the console disabled (its own code and 2.1 patches; the
+  // title with the floppy's line), then the floppy's patches
+  const im = apply(img, { ...data, code: a.code, patches: a.rom_patches,
+                          title: { ...data.title, new_line: a.new_line } });
   for (const p of a.patches) im.set(unhex(p.bytes), p.addr - data.base);
   // the payload's order: the AGA pictures last, the longs pointing at moved
   // data remapped (tools/adf_build.py body())
