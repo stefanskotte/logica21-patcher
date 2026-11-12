@@ -15,7 +15,6 @@
   {
    "date": "2026-11-11",
    "items": [
-    "A small change on the title screen.",
     "The floppy (ADF) is now Logica 2.1 with the serial/parallel console switched off: the error summary page, the keyboard at the title screen, the CPU and memory in the top right corner, the LOGICAL logo. Before, it was Logica 2.0 with the ADDRESS ERROR REPORT fix, and only the mouse worked at its title screen. Thanks to Vincent Price for the report (an A1200). Logica's own parallel, serial and CIA tests on the floppy run as in 2.0 (no console shares the ports).",
     "The floppy shows \"Loading Logica ...\" while it loads.",
     "Fixed: on a 68000 (A500, A2000) the CPU and memory in the top right corner were missing.",
