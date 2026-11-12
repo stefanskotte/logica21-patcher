@@ -244,8 +244,9 @@ function logo(img, data, len) {
       const v = get(x, y);
       if (v >= 1 && v <= 10) {
         const d = get(x + L.l_dx, y);
-        if (d !== 0 && d !== 11 && d !== 12 && d !== 13) throw new Error("logo: L overlaps a letter");
-        put(x + L.l_dx, y, v);
+        const under = d === 0 || d === 11 || d === 12 || d === 13;  // background, the red hand
+        if (!under && d > 4) throw new Error("logo: L overlaps a letter");
+        put(x + L.l_dx, y, under ? v : Math.max(v, d));             // the A's faint outline: brighter wins
       }
     }
   }
